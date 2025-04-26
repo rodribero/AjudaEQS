@@ -52,15 +52,27 @@
 <div id="toast" style="display:none;"></div>
 
 <script>
-const removerAcentos = (str) => str.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+const removerAcentos = (str) => str.normalize("NFD").replace(/[̀-ͯ]/g, "");
 let dadosPlanilha = [];
 
-const URL_PLANILHA_DADOS = 'https://opensheet.elk.sh/1lSFBrJBX3WPtTl6_5lB_ROlndE-ZI7snuURKm4Niudc/INFOSITES';
-const URL_PLANILHA_USUARIOS = 'https://opensheet.elk.sh/1lSFBrJBX3WPtTl6_5lB_ROlndE-ZI7snuURKm4Niudc/usuarios';
+function csvParaJson(csv) {
+  const linhas = csv.trim().split('\n');
+  const cabecalhos = linhas[0].split(',').map(h => h.trim());
+  return linhas.slice(1).map(linha => {
+    const dados = linha.split(',');
+    let objeto = {};
+    cabecalhos.forEach((cabecalho, i) => {
+      objeto[cabecalho] = dados[i]?.trim();
+    });
+    return objeto;
+  }).filter(obj => obj.SITE);
+}
 
 async function carregarDados() {
-  const resposta = await fetch(URL_PLANILHA_DADOS);
-  dadosPlanilha = await resposta.json();
+  const urlPlanilha = 'https://docs.google.com/spreadsheets/d/1Y2WR7rIYdj1R5br9jvkt6B832F_vjoG94RhhDyblWEc/export?format=csv&gid=2142502988';
+  const resposta = await fetch(urlPlanilha);
+  const textoCsv = await resposta.text();
+  dadosPlanilha = csvParaJson(textoCsv);
 }
 
 async function buscar() {
@@ -101,7 +113,7 @@ async function buscar() {
     return `
       <div class="bg-gray-50 hover:bg-gray-100 transition rounded-lg p-4 mb-3 shadow-sm">
         <p><strong>Site:</strong> ${resultado.SITE}</p>
-        <p><strong>Unidade Consumidora:</strong> ${resultado.UC} <button onclick="copiarTexto('${resultado.UC}')" class="ml-2 px-2 py-1 bg-green-500 hover:bg-green-600 text-white text-xs rounded">Copiar</button></p>
+        <p><strong>Unidade Consumidora:</strong> ${resultado.UC}</p>
         <p><strong>Medidor:</strong> ${resultado.MEDIDOR}</p>
         <p><strong>Concessionária:</strong> ${resultado.CONCESSIONARIA}</p>
         <p><strong>Cidade:</strong> ${resultado.CIDADE}</p>
@@ -112,12 +124,6 @@ async function buscar() {
 
   btn.disabled = false;
   btn.innerHTML = 'Buscar';
-}
-
-function copiarTexto(texto) {
-  navigator.clipboard.writeText(texto)
-    .then(() => mostrarToast('Número copiado para a área de transferência!'))
-    .catch(err => console.error('Erro ao copiar:', err));
 }
 
 async function sugerirNomes() {
@@ -151,6 +157,16 @@ function selecionarSugestao(sugestao) {
   document.getElementById('termoBusca').value = sugestao;
   document.getElementById('sugestoes').innerHTML = '';
   buscar();
+}
+
+function mostrarToast(mensagem) {
+  const toast = document.getElementById('toast');
+  toast.innerText = mensagem;
+  toast.className = 'toast';
+  toast.style.display = 'block';
+  setTimeout(() => {
+    toast.style.display = 'none';
+  }, 3000);
 }
 
 document.getElementById('buscarBtn').addEventListener('click', buscar);
