@@ -233,4 +233,33 @@
       }
 
       resultadosFiltrados.forEach(item => {
-        const div = document
+        const div = document.createElement('div');
+        div.className = "resultado";
+
+        div.innerHTML = `
+          <div class="info"><span><strong>Site:</strong> ${item.SITE || ''}</span></div>
+          <div class="info">
+            <span><strong>UC:</strong> ${item.UC || ''} <button class="copy-button" onclick="copiarTexto('${item.UC || ''}')">📋</button></span>
+          </div>
+          <div class="info"><span><strong>Medidor:</strong> ${item.MEDIDOR || ''}</span></div>
+          <div class="info"><span><strong>Concessionária:</strong> ${item.CONCESSIONARIA || ''}</span></div>
+          <div class="info"><span><strong>Cidade:</strong> ${item.CIDADE || ''}</span></div>
+          <div style="text-align:center; margin-top: 15px;">
+            <button class="map-button" onclick="abrirMapa('${item.LATITUDE}', '${item.LONGITUDE}')">📍 Localização</button>
+          </div>
+        `;
+        container.appendChild(div);
+      });
+    }
+
+    function realizarBusca() {
+      const termo = document.getElementById('busca').value;
+      document.getElementById('sugestoes').innerHTML = "";
+      mostrarResultados(termo);
+    }
+
+    carregarDados();
+  </script>
+
+</body>
+</html>
