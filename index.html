@@ -177,7 +177,10 @@
 
       const filtro = normalizar(input.value.trim());
 
-      if (!filtro) return;
+      if (!filtro) {
+        document.getElementById('resultados').innerHTML = "";
+        return;
+      }
 
       const sugestoesSites = dados
         .filter(item => item.SITE && normalizar(item.SITE).startsWith(filtro))
