@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ajuda EQS</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <style>
+    .toast {
+      position: fixed;
+      bottom: 1rem;
+      right: 1rem;
+      background: #4ade80;
+      color: white;
+      padding: 0.75rem 1rem;
+      border-radius: 0.5rem;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+      animation: fadeinout 3s forwards;
+    }
+    @keyframes fadeinout {
+      0% {opacity: 0;}
+      10% {opacity: 1;}
+      90% {opacity: 1;}
+      100% {opacity: 0;}
+    }
+  </style>
+</head>
+<body class="bg-gradient-to-b from-gray-50 to-gray-200 min-h-screen flex flex-col justify-between p-4 sm:p-6">
+
+<div class="w-full max-w-2xl mx-auto bg-white p-6 rounded-xl shadow-lg">
+  <h1 class="text-4xl font-extrabold text-gray-700 mb-6 text-center">Ajuda EQS</h1>
+
+  <input id="termoBusca" type="text" placeholder="Digite o nome do site ou cidade"
+    class="w-full border border-gray-300 rounded-lg px-4 py-3 mb-4 focus:outline-none focus:ring-2 focus:ring-blue-400 text-lg" oninput="sugerirNomes()">
+
+  <div id="sugestoes" class="mt-2 bg-white rounded-md shadow-md max-h-48 overflow-y-auto"></div>
+
+  <button id="buscarBtn"
+    class="w-full bg-blue-500 hover:bg-blue-600 transition-colors duration-300 text-white py-5 text-2xl rounded-lg font-bold mt-2">
+    Buscar
+  </button>
+
+  <div id="resultados" class="mt-6"></div>
+</div>
+
+<footer class="text-center text-gray-600 text-xs mt-8 p-4">
+  Desenvolvido por Rodrigo Ribero<br/>
+  Acessos: <span id="contadorAcessos">0</span>
+</footer>
+
+<div id="toast" style="display:none;"></div>
+
+<script>
+const removerAcentos = (str) => str.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+let dadosPlanilha = [];
+
+const URL_PLANILHA_DADOS = 'https://opensheet.elk.sh/1lSFBrJBX3WPtTl6_5lB_ROlndE-ZI7snuURKm4Niudc/INFOSITES';
+const URL_PLANILHA_USUARIOS = 'https://opensheet.elk.sh/1lSFBrJBX3WPtTl6_5lB_ROlndE-ZI7snuURKm4Niudc/usuarios';
+
+async function carregarDados() {
+  const resposta = await fetch(URL_PLANILHA_DADOS);
+  dadosPlanilha = await resposta.json();
+}
+
+async function buscar() {
+  const btn = document.getElementById('buscarBtn');
+  btn.disabled = true;
+  btn.innerHTML = 'Buscando...';
+
+  const termo = removerAcentos(document.getElementById('termoBusca').value.toLowerCase().trim());
+  const resultadosDiv = document.getElementById('resultados');
+  const sugestoesDiv = document.getElementById('sugestoes');
+  sugestoesDiv.innerHTML = '';
+
+  if (dadosPlanilha.length === 0) await carregarDados();
+
+  const resultadosFiltrados = dadosPlanilha.filter(linha =>
+    (linha.SITE && removerAcentos(linha.SITE.toLowerCase()).includes(termo)) ||
+    (linha.CIDADE && removerAcentos(linha.CIDADE.toLowerCase()).includes(termo))
+  );
+
+  if (resultadosFiltrados.length === 0) {
+    resultadosDiv.innerHTML = '<p class="text-center text-red-500">Nenhum resultado encontrado.</p>';
+    btn.disabled = false;
+    btn.innerHTML = 'Buscar';
+    return;
+  }
+
+  resultadosDiv.innerHTML = resultadosFiltrados.map((resultado) => {
+    const latitude = resultado.LATITUDE?.trim();
+    const longitude = resultado.LONGITUDE?.trim();
+    const botaoMapa = latitude && longitude ? `
+      <div class='flex justify-center'>
+        <a href="https://www.google.com/maps/search/?api=1&query=${latitude},${longitude}" target="_blank"
+           class="inline-flex items-center gap-2 mt-3 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white px-5 py-2 rounded-full text-sm font-semibold shadow-md transition-transform transform hover:scale-105">
+          📍 Ver no Mapa
+        </a>
+      </div>` : '';
+
+    return `
+      <div class="bg-gray-50 hover:bg-gray-100 transition rounded-lg p-4 mb-3 shadow-sm">
+        <p><strong>Site:</strong> ${resultado.SITE}</p>
+        <p><strong>Unidade Consumidora:</strong> ${resultado.UC} <button onclick="copiarTexto('${resultado.UC}')" class="ml-2 px-2 py-1 bg-green-500 hover:bg-green-600 text-white text-xs rounded">Copiar</button></p>
+        <p><strong>Medidor:</strong> ${resultado.MEDIDOR}</p>
+        <p><strong>Concessionária:</strong> ${resultado.CONCESSIONARIA}</p>
+        <p><strong>Cidade:</strong> ${resultado.CIDADE}</p>
+        ${botaoMapa}
+      </div>
+    `;
+  }).join('');
+
+  btn.disabled = false;
+  btn.innerHTML = 'Buscar';
+}
+
+function copiarTexto(texto) {
+  navigator.clipboard.writeText(texto)
+    .then(() => mostrarToast('Número copiado para a área de transferência!'))
+    .catch(err => console.error('Erro ao copiar:', err));
+}
+
+async function sugerirNomes() {
+  const termo = removerAcentos(document.getElementById('termoBusca').value.toLowerCase().trim());
+  const sugestoesDiv = document.getElementById('sugestoes');
+
+  if (dadosPlanilha.length === 0) await carregarDados();
+
+  if (termo.length < 1) {
+    sugestoesDiv.innerHTML = '';
+    return;
+  }
+
+  const sugestoes = dadosPlanilha
+    .filter(linha =>
+      (linha.SITE && removerAcentos(linha.SITE.toLowerCase()).includes(termo)) ||
+      (linha.CIDADE && removerAcentos(linha.CIDADE.toLowerCase()).includes(termo))
+    )
+    .map(linha => linha.SITE || linha.CIDADE);
+
+  const sugestoesUnicas = [...new Set(sugestoes)].slice(0, 8);
+
+  sugestoesDiv.innerHTML = sugestoesUnicas.map(sugestao => `
+    <div class="p-2 hover:bg-gray-200 cursor-pointer text-sm" onclick="selecionarSugestao('${sugestao}')">
+      ${sugestao}
+    </div>
+  `).join('');
+}
+
+function selecionarSugestao(sugestao) {
+  document.getElementById('termoBusca').value = sugestao;
+  document.getElementById('sugestoes').innerHTML = '';
+  buscar();
+}
+
+document.getElementById('buscarBtn').addEventListener('click', buscar);
+
+window.onload = async function() {
+  await carregarDados();
+  let acessos = localStorage.getItem('contadorAcessos') || 0;
+  acessos++;
+  localStorage.setItem('contadorAcessos', acessos);
+  document.getElementById('contadorAcessos').innerText = acessos;
+}
+</script>
+
+</body>
+</html>
