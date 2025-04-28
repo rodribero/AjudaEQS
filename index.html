@@ -2,267 +2,202 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Ajuda EQS</title>
+  <script src="https://cdn.tailwindcss.com"></script>
   <style>
     body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background-color: #f2f4f8;
-      margin: 0;
-      padding: 0;
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      background: linear-gradient(to right, #e0eafc, #cfdef3);
     }
-    .container {
-      background: #ffffff;
-      padding: 40px 30px;
-      border-radius: 16px;
-      box-shadow: 0 8px 20px rgba(0,0,0,0.08);
-      width: 90%;
-      max-width: 450px;
-      text-align: center;
+    .fade-out {
+      transition: opacity 0.5s ease-out;
+      opacity: 0;
     }
-    h1 {
-      font-size: 28px;
-      color: #333;
-      margin-bottom: 25px;
-    }
-    .search-container {
-      display: flex;
-      flex-direction: column;
-      gap: 15px;
-      margin-bottom: 10px;
-      position: relative;
-    }
-    input[type="text"] {
-      padding: 14px;
-      font-size: 16px;
-      border: 1px solid #ccc;
-      border-radius: 10px;
-      box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);
-    }
-    .autocomplete-suggestions {
-      margin-top: 10px;
-      background: #fff;
-      border: 1px solid #ccc;
-      border-radius: 10px;
-      box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-    }
-    .autocomplete-suggestions div {
-      padding: 12px;
-      cursor: pointer;
-      border-bottom: 1px solid #eee;
-    }
-    .autocomplete-suggestions div:last-child {
-      border-bottom: none;
-    }
-    .autocomplete-suggestions div:hover {
-      background-color: #f0f0f0;
-    }
-    button {
-      padding: 14px;
-      font-size: 17px;
-      font-weight: bold;
-      background: linear-gradient(90deg, #007bff, #0056b3);
-      color: white;
-      border: none;
-      border-radius: 10px;
-      cursor: pointer;
-      transition: transform 0.2s, background 0.2s;
-    }
-    button:hover {
-      transform: scale(1.03);
-      background: linear-gradient(90deg, #0056b3, #007bff);
-    }
-    .map-button {
-      padding: 10px 20px;
-      font-size: 15px;
-      font-weight: bold;
-      background: linear-gradient(90deg, #007bff, #0056b3);
-      color: white;
-      border: none;
-      border-radius: 10px;
-      cursor: pointer;
-      transition: transform 0.2s, background 0.2s;
-    }
-    .map-button:hover {
-      transform: scale(1.03);
-      background: linear-gradient(90deg, #0056b3, #007bff);
-    }
-    .copy-button {
-      background: none;
-      border: none;
-      font-size: 14px;
-      color: #007bff;
-      cursor: pointer;
-      margin-left: 5px;
-    }
-    .copy-button:hover {
-      color: #0056b3;
-    }
-    .resultado {
-      background: #f8f9fa;
-      padding: 20px;
-      border-radius: 12px;
-      text-align: left;
-      box-shadow: inset 0 0 6px rgba(0,0,0,0.05);
-      margin-top: 20px;
-    }
-    .info {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      font-size: 16px;
-      color: #555;
-      margin-bottom: 8px;
-    }
-    .info span {
-      display: flex;
-      align-items: center;
-    }
-    .info strong {
-      margin-right: 5px;
-      color: #222;
-    }
-    .loading {
-      margin-top: 20px;
-      color: #777;
+    .popup-highlight {
+      background-color: #fff9c4;
     }
   </style>
 </head>
-<body>
+<body class="min-h-screen flex flex-col justify-between p-4 sm:p-6">
 
-  <div class="container">
-    <h1>Ajuda EQS</h1>
-    <div class="search-container">
-      <input type="text" id="busca" placeholder="Buscar site ou cidade..." oninput="atualizarSugestoes()">
-      <button onclick="realizarBusca()">Buscar</button>
+<div id="loginContainer" class="flex-grow flex items-center justify-center">
+  <div class="bg-white p-8 rounded-2xl shadow-2xl w-full max-w-md">
+    <h1 class="text-3xl font-bold mb-6 text-center text-blue-600">🔐 Login</h1>
+    <input id="usuario" type="text" placeholder="Usuário" class="w-full mb-4 px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-400">
+    <div class="relative mb-4">
+      <input id="senha" type="password" placeholder="Senha" class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-400">
+      <button type="button" onclick="toggleSenha()" class="absolute right-3 top-3 text-sm text-blue-600 hover:underline">Mostrar</button>
     </div>
-    <div id="sugestoes" class="autocomplete-suggestions"></div>
-    <div id="resultados"></div>
+    <div class="flex items-center mb-4">
+      <input id="lembrar" type="checkbox" class="mr-2">
+      <label for="lembrar" class="text-sm">Manter-me logado por 10 dias</label>
+    </div>
+    <button onclick="fazerLogin()" class="w-full bg-blue-600 hover:bg-blue-700 transition transform hover:scale-105 text-white py-3 rounded-lg font-bold">
+      Entrar
+    </button>
+    <div id="loginErro" class="mt-4 text-red-500 text-center"></div>
   </div>
+</div>
 
-  <script>
-    const url = "https://opensheet.vercel.app/1CqBE9J8S1muMBKT4v7x3jmZ4m4aecUaXOah_tWPaN1s/bd_infra";
+<div id="appContainer" class="hidden flex flex-col items-center">
+  <h1 class="text-4xl font-bold mb-6 text-center text-black">Ajuda EQS</h1>
+  <div class="w-full max-w-md">
+    <input id="termoBusca" type="text" oninput="sugerirNomes()" placeholder="Digite o nome do site ou cidade" class="w-full mb-4 px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-400">
+    <div id="sugestoes" class="w-full mb-2 shadow rounded bg-white"></div>
+    <button id="buscarBtn" onclick="buscar()" class="w-full mb-4 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded">
+      Buscar
+    </button>
+    <div id="resultados" class="w-full"></div>
+  </div>
+</div>
 
-    let dados = [];
+<footer class="text-center text-gray-500 text-xs py-4">
+  Desenvolvido por Rodrigo Ribero | Acessos: <span id="contadorAcessos">0</span>
+</footer>
 
-    async function carregarDados() {
-      try {
-        const resposta = await fetch(url);
-        const json = await resposta.json();
-        if (Array.isArray(json)) {
-          dados = json;
-        } else {
-          console.error("Erro: dados retornados não são um array", json);
-          dados = [];
-        }
-      } catch (error) {
-        console.error("Erro ao carregar dados:", error);
-        const container = document.getElementById('resultados');
-        container.innerHTML = "Erro ao carregar dados.";
+<script>
+let dadosPlanilha = [];
+const URL_PLANILHA_USUARIOS = 'https://opensheet.elk.sh/1CqBE9J8S1muMBKT4v7x3jmZ4m4aecUaXOah_tWPaN1s/usuarios';
+const URL_PLANILHA_DADOS = 'https://opensheet.elk.sh/1CqBE9J8S1muMBKT4v7x3jmZ4m4aecUaXOah_tWPaN1s/bd_infra';
+
+function removerAcentos(str) {
+  return str.normalize("NFD").replace(/[̀-ͯ]/g, "");
+}
+
+async function fazerLogin() {
+  const usuario = document.getElementById("usuario").value.trim().toLowerCase();
+  const senha = document.getElementById("senha").value.trim();
+  const lembrar = document.getElementById("lembrar").checked;
+  const erroDiv = document.getElementById("loginErro");
+
+  try {
+    const resposta = await fetch(URL_PLANILHA_USUARIOS);
+    const usuarios = await resposta.json();
+    const encontrado = usuarios.find(u => (u.usuario || '').toLowerCase() === usuario && (u.senha || '') === senha);
+
+    if (encontrado) {
+      document.getElementById("loginContainer").classList.add("hidden");
+      document.getElementById("appContainer").classList.remove("hidden");
+      if (lembrar) {
+        const agora = new Date();
+        agora.setDate(agora.getDate() + 10);
+        localStorage.setItem("usuarioLogado", JSON.stringify({ usuario, expira: agora.getTime() }));
       }
+      incrementarAcessos();
+      await carregarDados();
+    } else {
+      erroDiv.textContent = "Usuário ou senha incorretos.";
     }
+  } catch (erro) {
+    console.error("Erro ao fazer login:", erro);
+    erroDiv.textContent = "Erro ao verificar login.";
+  }
+}
 
-    function normalizar(texto) {
-      return texto.normalize("NFD").replace(/\p{Diacritic}/gu, "").toLowerCase();
-    }
+function toggleSenha() {
+  const senhaInput = document.getElementById("senha");
+  if (senhaInput.type === "password") {
+    senhaInput.type = "text";
+    event.target.textContent = "Ocultar";
+  } else {
+    senhaInput.type = "password";
+    event.target.textContent = "Mostrar";
+  }
+}
 
-    function atualizarSugestoes() {
-      const input = document.getElementById('busca');
-      const sugestoesContainer = document.getElementById('sugestoes');
-      sugestoesContainer.innerHTML = "";
+async function carregarDados() {
+  try {
+    const resposta = await fetch(URL_PLANILHA_DADOS);
+    dadosPlanilha = await resposta.json();
+  } catch (erro) {
+    console.error('Erro ao carregar dados:', erro);
+  }
+}
 
-      const filtro = normalizar(input.value.trim());
+function incrementarAcessos() {
+  let acessos = localStorage.getItem("contadorAcessos") || 0;
+  acessos++;
+  localStorage.setItem("contadorAcessos", acessos);
+  document.getElementById("contadorAcessos").innerText = acessos;
+}
 
-      if (!filtro) {
-        document.getElementById('resultados').innerHTML = "";
-        return;
-      }
+function copiarTexto(texto) {
+  navigator.clipboard.writeText(texto)
+    .then(() => alert('UC copiado!'))
+    .catch(err => console.error('Erro ao copiar:', err));
+}
 
-      const sugestoesSites = dados
-        .filter(item => item.SITE && normalizar(item.SITE).startsWith(filtro))
-        .map(item => item.SITE);
+function buscar() {
+  const termo = removerAcentos(document.getElementById("termoBusca").value.trim().toLowerCase());
+  const resultadosDiv = document.getElementById("resultados");
 
-      const sugestoesCidades = dados
-        .filter(item => item.CIDADE && normalizar(item.CIDADE).startsWith(filtro))
-        .map(item => item.CIDADE);
+  if (!termo) {
+    resultadosDiv.innerHTML = '<p class="text-red-500">Por favor, digite um site ou cidade.</p>';
+    return;
+  }
 
-      const todasSugestoes = [...new Set([...sugestoesSites, ...sugestoesCidades])].slice(0, 10);
+  const resultadosFiltrados = dadosPlanilha.filter(linha =>
+    (linha.SITE && removerAcentos(linha.SITE.toLowerCase()).includes(termo)) ||
+    (linha.CIDADE && removerAcentos(linha.CIDADE.toLowerCase()).startsWith(termo))
+  );
 
-      todasSugestoes.forEach(texto => {
-        const div = document.createElement('div');
-        div.textContent = texto;
-        div.onclick = () => {
-          input.value = texto;
-          sugestoesContainer.innerHTML = "";
-          realizarBusca();
-        };
-        sugestoesContainer.appendChild(div);
-      });
-    }
+  if (resultadosFiltrados.length > 0) {
+    resultadosDiv.innerHTML = resultadosFiltrados.map(resultado => `
+      <div class="bg-white p-4 rounded-lg shadow mb-4">
+        <p><strong>Site:</strong> ${resultado.SITE}</p>
+        <p class="flex items-center gap-2"><strong>UC:</strong> ${resultado.UC}
+          <button onclick="copiarTexto('${resultado.UC}')" class="ml-2 p-1 rounded hover:bg-gray-200">📋</button>
+        </p>
+        <p><strong>Medidor:</strong> ${resultado.MEDIDOR}</p>
+        <p><strong>Concessionária:</strong> ${resultado.CONCESSIONARIA}</p>
+        <p><strong>Cidade:</strong> ${resultado.CIDADE}</p>
+        ${resultado.LATITUDE && resultado.LONGITUDE ? `<div class="flex justify-center mt-4">
+          <a href="https://www.google.com/maps/search/?api=1&query=${resultado.LATITUDE},${resultado.LONGITUDE}" target="_blank" class="bg-blue-600 hover:bg-blue-700 transition transform hover:scale-110 text-white text-sm py-2 px-6 rounded-full shadow-md">
+            📍 Estou Aqui
+          </a>
+        </div>` : ''}
+      </div>
+    `).join('');
+  } else {
+    resultadosDiv.innerHTML = '<p class="text-yellow-600">Nenhum resultado encontrado.</p>';
+  }
+}
 
-    function copiarTexto(texto) {
-      navigator.clipboard.writeText(texto).then(() => {
-        alert("UC copiada para área de transferência!");
-      });
-    }
+function sugerirNomes() {
+  const termo = removerAcentos(document.getElementById("termoBusca").value.trim().toLowerCase());
+  const sugestoesDiv = document.getElementById("sugestoes");
+  if (!termo) {
+    sugestoesDiv.innerHTML = "";
+    return;
+  }
 
-    function abrirMapa(lat, lng) {
-      const url = `https://www.google.com/maps?q=${lat},${lng}`;
-      window.open(url, '_blank');
-    }
+  const sugestoes = dadosPlanilha.filter(linha =>
+    (linha.SITE && removerAcentos(linha.SITE.toLowerCase()).includes(termo)) ||
+    (linha.CIDADE && removerAcentos(linha.CIDADE.toLowerCase()).startsWith(termo))
+  ).slice(0, 5);
 
-    function mostrarResultados(filtro) {
-      const container = document.getElementById('resultados');
-      container.innerHTML = "";
+  if (sugestoes.length > 0) {
+    sugestoesDiv.innerHTML = sugestoes.map(item => `
+      <div class="p-2 hover:bg-gray-200 cursor-pointer rounded ${item.POPUP ? 'popup-highlight' : ''}" onclick="selecionarSugestao('${item.SITE || item.CIDADE}')">
+        ${item.SITE || item.CIDADE}
+      </div>
+    `).join('');
+  } else {
+    sugestoesDiv.innerHTML = "";
+  }
+}
 
-      if (!filtro.trim()) {
-        return;
-      }
-
-      const filtroNormalizado = normalizar(filtro);
-
-      const resultadosFiltrados = dados.filter(item => 
-        (item.CIDADE && normalizar(item.CIDADE) === filtroNormalizado) ||
-        (item.SITE && normalizar(item.SITE).startsWith(filtroNormalizado))
-      );
-
-      if (resultadosFiltrados.length === 0) {
-        container.innerHTML = "<div class='loading'>Nenhum resultado encontrado.</div>";
-        return;
-      }
-
-      resultadosFiltrados.forEach(item => {
-        const div = document.createElement('div');
-        div.className = "resultado";
-
-        div.innerHTML = `
-          <div class="info"><span><strong>Site:</strong> ${item.SITE || ''}</span></div>
-          <div class="info">
-            <span><strong>UC:</strong> ${item.UC || ''} <button class="copy-button" onclick="copiarTexto('${item.UC || ''}')">📋</button></span>
-          </div>
-          <div class="info"><span><strong>Medidor:</strong> ${item.MEDIDOR || ''}</span></div>
-          <div class="info"><span><strong>Concessionária:</strong> ${item.CONCESSIONARIA || ''}</span></div>
-          <div class="info"><span><strong>Cidade:</strong> ${item.CIDADE || ''}</span></div>
-          <div style="text-align:center; margin-top: 15px;">
-            <button class="map-button" onclick="abrirMapa('${item.LATITUDE}', '${item.LONGITUDE}')">📍 Localização</button>
-          </div>
-        `;
-        container.appendChild(div);
-      });
-    }
-
-    function realizarBusca() {
-      const termo = document.getElementById('busca').value;
-      document.getElementById('sugestoes').innerHTML = "";
-      mostrarResultados(termo);
-    }
-
-    carregarDados();
-  </script>
+function selecionarSugestao(valor) {
+  document.getElementById('termoBusca').value = valor;
+  const sugestoesDiv = document.getElementById('sugestoes');
+  sugestoesDiv.classList.add('fade-out');
+  setTimeout(() => {
+    sugestoesDiv.innerHTML = "";
+    sugestoesDiv.classList.remove('fade-out');
+  }, 500);
+  buscar();
+}
+</script>
 
 </body>
 </html>
