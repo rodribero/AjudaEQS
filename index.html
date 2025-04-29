@@ -9,12 +9,50 @@
     body {
       background: linear-gradient(to right, #e0eafc, #cfdef3);
     }
-    .fade-out {
-      transition: opacity 0.5s ease-out;
-      opacity: 0;
+    .fade-in {
+      animation: fadeIn 0.5s ease-in forwards;
+    }
+    @keyframes fadeIn {
+      0% { opacity: 0; transform: translateY(20px); }
+      100% { opacity: 1; transform: translateY(0); }
     }
     .popup-highlight {
       background-color: #fff9c4;
+    }
+    .suggestion-box {
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      background: #ffffff;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      padding: 8px;
+    }
+    .suggestion-item {
+      padding: 10px;
+      cursor: pointer;
+      border-bottom: 1px solid #eee;
+      font-size: 14px;
+      transition: all 0.3s ease;
+    }
+    .suggestion-item:hover {
+      background-color: #e3f2fd;
+      font-weight: bold;
+      border-left: 4px solid #3b82f6;
+    }
+    .suggestion-item:last-child {
+      border-bottom: none;
+    }
+    .suggestion-info {
+      font-size: 10px;
+      color: #999;
+      margin-top: 2px;
+    }
+    .cell-owner-link {
+      color: #2563eb;
+      font-weight: bold;
+      text-decoration: underline;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
     }
   </style>
 </head>
@@ -28,10 +66,6 @@
       <input id="senha" type="password" placeholder="Senha" class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-400">
       <button type="button" onclick="toggleSenha()" class="absolute right-3 top-3 text-sm text-blue-600 hover:underline">Mostrar</button>
     </div>
-    <div class="flex items-center mb-4">
-      <input id="lembrar" type="checkbox" class="mr-2">
-      <label for="lembrar" class="text-sm">Manter-me logado por 10 dias</label>
-    </div>
     <button onclick="fazerLogin()" class="w-full bg-blue-600 hover:bg-blue-700 transition transform hover:scale-105 text-white py-3 rounded-lg font-bold">
       Entrar
     </button>
@@ -43,7 +77,7 @@
   <h1 class="text-4xl font-bold mb-6 text-center text-black">Ajuda EQS</h1>
   <div class="w-full max-w-md">
     <input id="termoBusca" type="text" oninput="sugerirNomes()" placeholder="Digite o nome do site ou cidade" class="w-full mb-4 px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-400">
-    <div id="sugestoes" class="w-full mb-2 shadow rounded bg-white"></div>
+    <div id="sugestoes" class="suggestion-box w-full mb-2"></div>
     <button id="buscarBtn" onclick="buscar()" class="w-full mb-4 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded">
       Buscar
     </button>
@@ -52,13 +86,13 @@
 </div>
 
 <footer class="text-center text-gray-500 text-xs py-4">
-  Desenvolvido por Rodrigo Ribero | Acessos: <span id="contadorAcessos">0</span>
+  Desenvolvido por Rodrigo Ribero
 </footer>
 
 <script>
-let dadosPlanilha = [];
 const URL_PLANILHA_USUARIOS = 'https://opensheet.elk.sh/1CqBE9J8S1muMBKT4v7x3jmZ4m4aecUaXOah_tWPaN1s/usuarios';
 const URL_PLANILHA_DADOS = 'https://opensheet.elk.sh/1CqBE9J8S1muMBKT4v7x3jmZ4m4aecUaXOah_tWPaN1s/bd_infra';
+let dadosPlanilha = [];
 
 function removerAcentos(str) {
   return str.normalize("NFD").replace(/[̀-ͯ]/g, "");
@@ -67,7 +101,6 @@ function removerAcentos(str) {
 async function fazerLogin() {
   const usuario = document.getElementById("usuario").value.trim().toLowerCase();
   const senha = document.getElementById("senha").value.trim();
-  const lembrar = document.getElementById("lembrar").checked;
   const erroDiv = document.getElementById("loginErro");
 
   try {
@@ -78,12 +111,6 @@ async function fazerLogin() {
     if (encontrado) {
       document.getElementById("loginContainer").classList.add("hidden");
       document.getElementById("appContainer").classList.remove("hidden");
-      if (lembrar) {
-        const agora = new Date();
-        agora.setDate(agora.getDate() + 10);
-        localStorage.setItem("usuarioLogado", JSON.stringify({ usuario, expira: agora.getTime() }));
-      }
-      incrementarAcessos();
       await carregarDados();
     } else {
       erroDiv.textContent = "Usuário ou senha incorretos.";
@@ -114,13 +141,6 @@ async function carregarDados() {
   }
 }
 
-function incrementarAcessos() {
-  let acessos = localStorage.getItem("contadorAcessos") || 0;
-  acessos++;
-  localStorage.setItem("contadorAcessos", acessos);
-  document.getElementById("contadorAcessos").innerText = acessos;
-}
-
 function copiarTexto(texto) {
   navigator.clipboard.writeText(texto)
     .then(() => alert('UC copiado!'))
@@ -142,9 +162,15 @@ function buscar() {
   );
 
   if (resultadosFiltrados.length > 0) {
-    resultadosDiv.innerHTML = resultadosFiltrados.map(resultado => `
-      <div class="bg-white p-4 rounded-lg shadow mb-4">
+    resultadosDiv.innerHTML = resultadosFiltrados.map(resultado => {
+      const cellOwner = resultado.CO === "Rodrigo Ribero"
+        ? `<a href="https://wa.me/5551993751580" target="_blank" class="cell-owner-link">${resultado.CO} 📱</a>`
+        : `${resultado.CO || ''}`;
+
+      return `
+      <div class="bg-white p-4 rounded-lg shadow mb-4 fade-in">
         <p><strong>Site:</strong> ${resultado.SITE}</p>
+        <p><strong>Cell Owner:</strong> ${cellOwner}</p>
         <p class="flex items-center gap-2"><strong>UC:</strong> ${resultado.UC}
           <button onclick="copiarTexto('${resultado.UC}')" class="ml-2 p-1 rounded hover:bg-gray-200">📋</button>
         </p>
@@ -157,7 +183,8 @@ function buscar() {
           </a>
         </div>` : ''}
       </div>
-    `).join('');
+      `;
+    }).join('');
   } else {
     resultadosDiv.innerHTML = '<p class="text-yellow-600">Nenhum resultado encontrado.</p>';
   }
@@ -174,12 +201,13 @@ function sugerirNomes() {
   const sugestoes = dadosPlanilha.filter(linha =>
     (linha.SITE && removerAcentos(linha.SITE.toLowerCase()).includes(termo)) ||
     (linha.CIDADE && removerAcentos(linha.CIDADE.toLowerCase()).startsWith(termo))
-  ).slice(0, 5);
+  ).slice(0, 10);
 
   if (sugestoes.length > 0) {
     sugestoesDiv.innerHTML = sugestoes.map(item => `
-      <div class="p-2 hover:bg-gray-200 cursor-pointer rounded ${item.POPUP ? 'popup-highlight' : ''}" onclick="selecionarSugestao('${item.SITE || item.CIDADE}')">
+      <div class="suggestion-item ${item.POPUP ? 'popup-highlight' : ''}" onclick="selecionarSugestao('${item.SITE || item.CIDADE}')">
         ${item.SITE || item.CIDADE}
+        <div class="suggestion-info">Clique para buscar</div>
       </div>
     `).join('');
   } else {
