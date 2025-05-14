@@ -135,7 +135,7 @@
           ${alertBox}
           <div class="text-base text-gray-800 space-y-2">
             <div><i class="fa fa-building text-blue-600 mr-2"></i><strong>Site:</strong> ${item.SITE || "-"}</div>
-            <div><i class="fa fa-user text-green-600 mr-2"></i><strong>Cell Owner:</strong> ${item.CO || "-"} ${item.TELEFONE ? `<a href="${createWhatsAppLink(item.TELEFONE)}" target="_blank" class="ml-2 text-blue-600"><i class="fab fa-whatsapp text-green-600"></i> WhatsApp</a>` : ""}</div>
+            <div><i class="fa fa-user text-green-600 mr-2"></i><strong>CO:</strong> ${item.CO || "-"} ${item.TELEFONE ? `<a href="${createWhatsAppLink(item.TELEFONE)}" target="_blank" class="ml-2 text-blue-600"><i class="fab fa-whatsapp text-green-600"></i> WhatsApp</a>` : ""}</div>
             <div><i class="fa fa-barcode text-gray-600 mr-2"></i><strong>UC:</strong> ${item.UC || "-"} <button onclick="copyToClipboard('${item.UC}')" class="ml-2 text-blue-600">📋 Copiar</button></div>
             <div><i class="fa fa-tachometer-alt text-purple-600 mr-2"></i><strong>Medidor:</strong> ${item.MEDIDOR || "-"}</div>
             <div><i class="fa fa-bolt text-yellow-600 mr-2"></i><strong>Concessionária:</strong> ${item.CONCESSIONARIA || "-"}</div>
