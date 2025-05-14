@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Acesso EQS</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-blue-100 min-h-screen flex items-center justify-center p-4">
+  <div id="loginContainer" class="w-full max-w-sm bg-white p-6 rounded-xl shadow space-y-6">
+    <div class="text-center">
+      <h2 class="text-2xl font-bold text-blue-900">🔐 Acesso EQS</h2>
+      <p class="text-sm text-gray-500">Sistema Interno de Consulta</p>
+    </div>
+
+    <input id="username" type="text" placeholder="Usuário (minúsculo)" class="w-full border p-3 rounded focus:outline-none" oninput="this.value = this.value.toLowerCase()" />
+
+    <div class="relative">
+      <input id="password" type="password" placeholder="Senha" class="w-full border p-3 rounded pr-20 focus:outline-none" />
+      <button onclick="togglePassword()" class="absolute right-3 top-2 text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded hover:bg-blue-200">Mostrar</button>
+    </div>
+
+    <button onclick="login()" class="w-full bg-blue-600 text-white py-2 rounded font-semibold hover:bg-blue-700 transition">Entrar</button>
+    <p id="loginError" class="text-red-600 text-sm text-center hidden">Usuário ou senha incorretos.</p>
+  </div>
+
+  <script>
+    const USERS_API = "https://opensheet.vercel.app/1CqBE9J8S1muMBKT4v7x3jmZ4m4aecUaXOah_tWPaN1s/usuarios";
+
+    let users = [];
+    async function fetchUsers() {
+      const res = await fetch(USERS_API);
+      users = await res.json();
+    }
+
+    function togglePassword() {
+      const pw = document.getElementById("password");
+      pw.type = pw.type === "password" ? "text" : "password";
+    }
+
+    async function login() {
+      const user = document.getElementById("username").value.trim();
+      const pass = document.getElementById("password").value.trim();
+      const match = users.find(u => u.usuario === user && u.senha === pass);
+      const errorEl = document.getElementById("loginError");
+
+      if (match) {
+        localStorage.setItem("usuario_logado", user);
+        window.location.href = "sistema.html";
+      } else {
+        errorEl.classList.remove("hidden");
+      }
+    }
+
+    fetchUsers();
+  </script>
+</body>
+</html>

@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8"/>
+  <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+  <title>Ajuda EQS</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet"/>
+  <style>
+    .fade-in {
+      animation: fadeIn 0.3s ease-in-out forwards;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body class="bg-blue-100 min-h-screen p-4">
+  <div class="max-w-2xl mx-auto">
+    <h1 class="text-3xl font-bold text-center mb-6">Ajuda EQS</h1>
+    <input class="w-full p-3 border border-blue-400 rounded-lg shadow mb-4 focus:outline-none focus:ring-2 focus:ring-blue-300" id="searchInput" placeholder="Digite cidade ou nome do site..." type="text"/>
+    <div class="mb-2 text-sm text-blue-800" id="cityCounts"></div>
+    <div class="mb-4 text-sm text-blue-800" id="siteSuggestions"></div>
+    <div class="space-y-4" id="results"></div>
+    <footer class="text-center text-sm text-gray-600 mt-10">Desenvolvido por Rodrigo Ribero</footer>
+  </div>
+
+  <script>
+    const apiURL = "https://opensheet.vercel.app/1CqBE9J8S1muMBKT4v7x3jmZ4m4aecUaXOah_tWPaN1s/bd_infra";
+
+    function normalize(str) {
+      return str.normalize("NFD").replace(/\p{Diacritic}/gu, "").toLowerCase();
+    }
+
+    async function fetchData() {
+      const res = await fetch(apiURL);
+      return await res.json();
+    }
+
+    function createWhatsAppLink(number) {
+      const num = number.replace(/\D/g, "");
+      return `https://wa.me/55${num}`;
+    }
+
+    function createMapLink(lat, long) {
+      return `https://www.google.com/maps?q=${lat},${long}`;
+    }
+
+    function copyToClipboard(text) {
+      navigator.clipboard.writeText(text);
+      alert("UC copiada com sucesso!");
+    }
+
+    function render(data, query, exclusive = false) {
+      const results = document.getElementById("results");
+      const cityCounts = document.getElementById("cityCounts");
+      const siteSuggestions = document.getElementById("siteSuggestions");
+      results.innerHTML = "";
+      cityCounts.innerHTML = "";
+      siteSuggestions.innerHTML = "";
+
+      const normQuery = normalize(query);
+      const filtered = data.filter(item =>
+        exclusive
+          ? normalize(item.CIDADE || "") === normQuery || normalize(item.SITE || "") === normQuery
+          : normalize(item.CIDADE || "").includes(normQuery) || normalize(item.SITE || "").includes(normQuery)
+      );
+
+      if (!exclusive) {
+        const cityMap = {};
+        filtered.forEach(item => {
+          const cidade = item.CIDADE || "";
+          cityMap[cidade] = (cityMap[cidade] || 0) + 1;
+        });
+
+        for (const [cidade, count] of Object.entries(cityMap)) {
+          const button = document.createElement("button");
+          button.className = "mr-2 mb-2 inline-block bg-blue-100 hover:bg-blue-200 text-blue-800 text-xs px-3 py-1 rounded-full transition";
+          button.textContent = `${cidade}: ${count} site${count > 1 ? "s" : ""}`;
+          button.addEventListener("click", () => {
+            document.getElementById("searchInput").value = cidade;
+            render(data, cidade, true);
+          });
+          cityCounts.appendChild(button);
+        }
+
+        const siteNames = [...new Set(filtered.map(i => i.SITE).filter(site => normalize(site).includes(normQuery)))].slice(0, 5);
+        siteNames.forEach(site => {
+          const b = document.createElement("button");
+          b.className = "mr-2 mb-2 inline-block bg-gray-100 hover:bg-gray-200 text-blue-800 text-xs px-3 py-1 rounded-full transition";
+          b.textContent = "🏢 " + site;
+          b.onclick = () => {
+            document.getElementById("searchInput").value = site;
+            render(data, site, true);
+          };
+          siteSuggestions.appendChild(b);
+        });
+      }
+
+      filtered.forEach(item => {
+        const card = document.createElement("div");
+        const popupText = item.POPUP || "";
+        const normPopup = popupText.toLowerCase();
+
+        let alertClass = "";
+        let alertBox = "";
+        const hasGpon = normPopup.includes("gpon");
+        const hasMonosite = normPopup.includes("monosite");
+        const hasConcentrador = normPopup.includes("concentrador");
+        const hasLocalidade = normPopup.includes("localidade");
+        const hasAnyText = normPopup.trim().length > 0;
+
+        if (hasGpon) {
+          alertClass = "bg-orange-300 text-orange-900";
+        } else if (hasMonosite) {
+          alertClass = "bg-orange-200 text-orange-900";
+        } else if (hasConcentrador) {
+          alertClass = "bg-orange-100 text-orange-800";
+        } else if (hasLocalidade) {
+          alertClass = "bg-green-100 text-green-800";
+        } else if (hasAnyText) {
+          alertClass = "bg-gray-100 text-gray-700";
+        }
+
+        if (alertClass) {
+          alertBox = `<div class="${alertClass} p-2 rounded text-sm font-semibold mb-2 text-center">⚠️ ${popupText}</div>`;
+        }
+
+        let baseClass = "rounded-lg shadow-md fade-in p-4 ";
+        const shouldHighlight = hasGpon || hasMonosite || hasConcentrador || hasLocalidade || hasAnyText;
+        card.className = baseClass + (shouldHighlight ? "bg-yellow-50" : "bg-white");
+
+        card.innerHTML = `
+          ${alertBox}
+          <div class="text-base text-gray-800 space-y-2">
+            <div><i class="fa fa-building text-blue-600 mr-2"></i><strong>Site:</strong> ${item.SITE || "-"}</div>
+            <div><i class="fa fa-user text-green-600 mr-2"></i><strong>Cell Owner:</strong> ${item.CO || "-"} ${item.TELEFONE ? `<a href="${createWhatsAppLink(item.TELEFONE)}" target="_blank" class="ml-2 text-blue-600"><i class="fab fa-whatsapp text-green-600"></i> WhatsApp</a>` : ""}</div>
+            <div><i class="fa fa-barcode text-gray-600 mr-2"></i><strong>UC:</strong> ${item.UC || "-"} <button onclick="copyToClipboard('${item.UC}')" class="ml-2 text-blue-600">📋 Copiar</button></div>
+            <div><i class="fa fa-tachometer-alt text-purple-600 mr-2"></i><strong>Medidor:</strong> ${item.MEDIDOR || "-"}</div>
+            <div><i class="fa fa-bolt text-yellow-600 mr-2"></i><strong>Concessionária:</strong> ${item.CONCESSIONARIA || "-"}</div>
+            <div><i class="fa fa-map-marker-alt text-red-600 mr-2"></i><strong>Cidade:</strong> ${item.CIDADE || "-"}</div>
+            ${item.SENHASECHAVES ? `<div><i class="fa fa-key text-yellow-700 mr-2"></i><strong>Senhas/Chaves:</strong> ${item.SENHASECHAVES}</div>` : ""}
+            ${item.OBSERVACOES ? `<div><i class="fa fa-sticky-note text-gray-700 mr-2"></i><strong>Observações:</strong> ${item.OBSERVACOES}</div>` : ""}
+          </div>
+          ${item.LATITUDE && item.LONGITUDE ? `<div class="mt-4 text-center"><a href="${createMapLink(item.LATITUDE, item.LONGITUDE)}" target="_blank" class="inline-block bg-blue-600 text-white text-sm px-4 py-1 rounded-full shadow hover:bg-blue-700 transition">📍 Estou Aqui</a></div>` : ""}
+        `;
+
+        results.appendChild(card);
+      });
+    }
+
+    document.getElementById("searchInput").addEventListener("input", async (e) => {
+      const value = e.target.value.trim();
+      if (!value) {
+        document.getElementById("results").innerHTML = "";
+        document.getElementById("cityCounts").innerHTML = "";
+        document.getElementById("siteSuggestions").innerHTML = "";
+        return;
+      }
+      const data = await fetchData();
+      render(data, value);
+    });
+  </script>
+</body>
+</html>
