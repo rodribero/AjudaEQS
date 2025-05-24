@@ -14,6 +14,19 @@
       from { opacity: 0; transform: translateY(8px); }
       to { opacity: 1; transform: translateY(0); }
     }
+    .card {
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    .card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 10px 20px rgba(0,0,0,0.15);
+    }
+    button {
+      transition: background-color 0.2s ease, transform 0.2s ease;
+    }
+    button:hover {
+      transform: scale(1.05);
+    }
   </style>
 </head>
 <body class="bg-blue-100 min-h-screen p-4">
@@ -127,7 +140,7 @@
           alertBox = `<div class="${alertClass} p-2 rounded text-sm font-semibold mb-2 text-center">⚠️ ${popupText}</div>`;
         }
 
-        let baseClass = "rounded-lg shadow-md fade-in p-4 ";
+        let baseClass = "card rounded-lg shadow-md fade-in p-4 ";
         const shouldHighlight = hasGpon || hasMonosite || hasConcentrador || hasLocalidade || hasAnyText;
         card.className = baseClass + (shouldHighlight ? "bg-yellow-50" : "bg-white");
 
@@ -139,6 +152,7 @@
             <div><i class="fa fa-barcode text-gray-600 mr-2"></i><strong>UC:</strong> ${item.UC || "-"} <button onclick="copyToClipboard('${item.UC}')" class="ml-2 text-blue-600">📋 Copiar</button></div>
             <div><i class="fa fa-tachometer-alt text-purple-600 mr-2"></i><strong>Medidor:</strong> ${item.MEDIDOR || "-"}</div>
             <div><i class="fa fa-bolt text-yellow-600 mr-2"></i><strong>Concessionária:</strong> ${item.CONCESSIONARIA || "-"}</div>
+            ${item.INFO_CONCESSIONARIA ? `<div><i class="fa fa-info-circle text-blue-500 mr-2"></i><strong>Info Concessionária:</strong> ${item.INFO_CONCESSIONARIA}</div>` : ""}
             <div><i class="fa fa-map-marker-alt text-red-600 mr-2"></i><strong>Cidade:</strong> ${item.CIDADE || "-"}</div>
             ${item.SENHASECHAVES ? `<div><i class="fa fa-key text-yellow-700 mr-2"></i><strong>Senhas/Chaves:</strong> ${item.SENHASECHAVES}</div>` : ""}
             ${item.OBSERVACOES ? `<div><i class="fa fa-sticky-note text-gray-700 mr-2"></i><strong>Observações:</strong> ${item.OBSERVACOES}</div>` : ""}
