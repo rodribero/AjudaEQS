@@ -26,8 +26,8 @@
 
   <script>
     const USERS_API = "https://opensheet.vercel.app/1CqBE9J8S1muMBKT4v7x3jmZ4m4aecUaXOah_tWPaN1s/usuarios";
-
     let users = [];
+
     async function fetchUsers() {
       const res = await fetch(USERS_API);
       users = await res.json();
@@ -41,8 +41,14 @@
     async function login() {
       const user = document.getElementById("username").value.trim();
       const pass = document.getElementById("password").value.trim();
-      const match = users.find(u => u.usuario === user && u.senha === pass);
       const errorEl = document.getElementById("loginError");
+
+      // Aguarda carregar usuários caso ainda não tenha sido carregado
+      if (users.length === 0) {
+        await fetchUsers();
+      }
+
+      const match = users.find(u => u.usuario === user && u.senha === pass);
 
       if (match) {
         localStorage.setItem("usuario_logado", user);
@@ -52,6 +58,7 @@
       }
     }
 
+    // Pré-carrega os usuários ao abrir a página
     fetchUsers();
   </script>
 </body>
