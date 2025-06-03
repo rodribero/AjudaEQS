@@ -21,6 +21,8 @@
     </div>
 
     <button onclick="login()" class="w-full bg-blue-600 text-white py-2 rounded font-semibold hover:bg-blue-700 transition">Entrar</button>
+
+    <p id="loginLoading" class="text-blue-600 text-sm text-center hidden">Verificando credenciais... Por favor, aguarde.</p>
     <p id="loginError" class="text-red-600 text-sm text-center hidden">Usuário ou senha incorretos.</p>
   </div>
 
@@ -42,23 +44,37 @@
       const user = document.getElementById("username").value.trim();
       const pass = document.getElementById("password").value.trim();
       const errorEl = document.getElementById("loginError");
+      const loadingEl = document.getElementById("loginLoading");
+      const loginBtn = document.querySelector("button[onclick='login()']");
 
-      // Aguarda carregar usuários caso ainda não tenha sido carregado
-      if (users.length === 0) {
-        await fetchUsers();
-      }
+      errorEl.classList.add("hidden");
+      loadingEl.classList.remove("hidden");
+      loginBtn.disabled = true;
+      loginBtn.classList.add("opacity-50");
 
-      const match = users.find(u => u.usuario === user && u.senha === pass);
+      try {
+        if (users.length === 0) {
+          await fetchUsers();
+        }
 
-      if (match) {
-        localStorage.setItem("usuario_logado", user);
-        window.location.href = "sistema.html";
-      } else {
+        const match = users.find(u => u.usuario === user && u.senha === pass);
+
+        if (match) {
+          localStorage.setItem("usuario_logado", user);
+          window.location.href = "sistema.html";
+        } else {
+          errorEl.classList.remove("hidden");
+        }
+      } catch (e) {
+        errorEl.textContent = "Erro ao verificar login. Tente novamente.";
         errorEl.classList.remove("hidden");
+      } finally {
+        loadingEl.classList.add("hidden");
+        loginBtn.disabled = false;
+        loginBtn.classList.remove("opacity-50");
       }
     }
 
-    // Pré-carrega os usuários ao abrir a página
     fetchUsers();
   </script>
 </body>
