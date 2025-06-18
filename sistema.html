@@ -71,17 +71,48 @@
       navigator.clipboard.writeText(text);
       Toastify({ text: "✅ UC copiada com sucesso!", duration: 3000, gravity: "top", position: "right", backgroundColor: "linear-gradient(to right, #00b09b, #96c93d)" }).showToast();
     }
+    
+    // --- FUNÇÃO DE SCREENSHOT MODIFICADA ---
     async function takeScreenshot(cardElement) {
+      // 1. Criar o container temporário que definirá o tamanho do print
       const screenshotContainer = document.createElement('div');
-      screenshotContainer.style.cssText = `position: absolute; left: -9999px; top: -9999px; padding: 15px; background-color: #EBF8FF;`;
+      
+      // MODIFICADO: Definindo as dimensões e o layout do print
+      screenshotContainer.style.cssText = `
+        position: absolute;
+        left: -9999px; 
+        top: -9999px;
+        background-color: #EBF8FF;
+        width: 420px; /* Largura fixa, similar a um celular */
+        min-height: 650px; /* Altura mínima para garantir a proporção */
+        padding: 20px;
+        display: flex; /* Usando flexbox para alinhar o conteúdo */
+        flex-direction: column; /* Alinhar itens verticalmente */
+        justify-content: space-between; /* Empurra o card para cima e a assinatura para baixo */
+        box-sizing: border-box;
+      `;
+
+      // 2. Clonar o card e adicioná-lo ao container
       const cardClone = cardElement.cloneNode(true);
       cardClone.style.transform = 'none';
       cardClone.style.boxShadow = '0 4px 6px rgba(0,0,0,0.1)';
+      cardClone.style.flexShrink = '0'; // Impede que o card encolha
       screenshotContainer.appendChild(cardClone);
+
+      // 3. Criar a assinatura e adicioná-la ao container
       const watermark = document.createElement('div');
       watermark.textContent = 'Desenvolvido por Rodrigo Ribero';
-      watermark.style.cssText = `text-align: center; font-size: 12px; font-weight: bold; color: #4A5568; padding-top: 10px;`;
+      watermark.style.cssText = `
+        text-align: center;
+        font-size: 12px;
+        font-weight: bold;
+        color: #4A5568;
+        padding-top: 15px; 
+        flex-shrink: 0; // Impede que a assinatura encolha
+      `;
       screenshotContainer.appendChild(watermark);
+
+      // O restante da função permanece igual...
       document.body.appendChild(screenshotContainer);
       try {
         const canvas = await html2canvas(screenshotContainer, { scale: 2 });
@@ -103,6 +134,7 @@
       }
     }
 
+    // A função render() não precisa de nenhuma alteração para que isso funcione
     function render(data, query, exclusive = false) {
       const results = document.getElementById("results");
       const cityCounts = document.getElementById("cityCounts");
@@ -115,7 +147,6 @@
           : normalize(item.CIDADE || "").includes(normQuery) || normalize(item.SITE || "").includes(normQuery)
       );
       if (!exclusive) {
-        // Lógica de sugestões (sem alteração)
         const cityMap = {};
         filtered.forEach(item => { const cidade = item.CIDADE || ""; cityMap[cidade] = (cityMap[cidade] || 0) + 1; });
         for (const [cidade, count] of Object.entries(cityMap)) {
@@ -134,7 +165,6 @@
           siteSuggestions.appendChild(b);
         });
       }
-
       filtered.forEach(item => {
         const wrapper = document.createElement('div');
         wrapper.className = 'card-wrapper fade-in';
@@ -156,15 +186,10 @@
         let baseClass = "card rounded-lg shadow-md p-4 ";
         const shouldHighlight = hasGpon || hasMonosite || hasConcentrador || hasLocalidade || hasAnyText;
         card.className = baseClass + (shouldHighlight ? "bg-yellow-50" : "bg-white");
-        
-        // --- INÍCIO DAS MODIFICAÇÕES ---
-
-        // 1. EXPANDIDO: Lógica dos links de concessionária agora inclui Certel
         let concessionariaHTML;
         const rgeSite = "https://www.rge-rs.com.br/desligamento-programado";
         const certelSite = "https://aplicativos.certelenergia.com.br/AgenciaVirtual/ServicosComplementares/DesligamentosProgramados";
         const concessionariaText = (item.CONCESSIONARIA || "").toLowerCase();
-
         if (concessionariaText.includes("rge")) {
           concessionariaHTML = `<a href="${rgeSite}" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:underline">${item.CONCESSIONARIA}</a>`;
         } else if (concessionariaText.includes("certel")) {
@@ -172,34 +197,23 @@
         } else {
           concessionariaHTML = item.CONCESSIONARIA || "-";
         }
-
-        // 2. EXPANDIDO: Lógica dos links de WhatsApp agora inclui o número 0800
         let infoConcessionariaHTML = "";
         if (item.INFO_CONCESSIONARIA) {
             let infoText = item.INFO_CONCESSIONARIA;
-            
-            // Regra para (51) 99955-0002
             const whatsappNumber1 = '(51) 99955-0002';
             if (infoText.includes(whatsappNumber1)) {
                 const cleanNumber = '5551999550002';
                 const link = `<a href="https://wa.me/${cleanNumber}" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:underline">${whatsappNumber1} <i class="fab fa-whatsapp text-green-600"></i></a>`;
                 infoText = infoText.replace(whatsappNumber1, link);
             }
-
-            // Nova regra para 0800 510 6300
             const whatsappNumber2 = '0800 510 6300';
             if (infoText.includes(whatsappNumber2)) {
-                const cleanNumber = '5508005106300'; // Formato para URL wa.me
+                const cleanNumber = '5508005106300';
                 const link = `<a href="https://wa.me/${cleanNumber}" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:underline">${whatsappNumber2} <i class="fab fa-whatsapp text-green-600"></i></a>`;
                 infoText = infoText.replace(whatsappNumber2, link);
             }
-
             infoConcessionariaHTML = `<div><i class="fa fa-info-circle text-blue-500 mr-2"></i><strong>Info Concessionária:</strong> ${infoText}</div>`;
         }
-        
-        // --- FIM DAS MODIFICAÇÕES ---
-
-        // Montagem do HTML do card
         card.innerHTML = `
           ${alertBox}
           <div class="text-base text-gray-800 space-y-2">
@@ -225,6 +239,8 @@
         results.appendChild(wrapper);
       });
     }
+
+    // Event listener do input (sem alteração)
     document.getElementById("searchInput").addEventListener("input", async (e) => {
       const value = e.target.value.trim();
       if (!value) {
