@@ -22,19 +22,25 @@
 
     <button onclick="login()" class="w-full bg-blue-600 text-white py-2 rounded font-semibold hover:bg-blue-700 transition">Entrar</button>
 
-    <div id="loginLoading" class="flex items-center justify-center gap-2 text-blue-600 text-sm text-center hidden">
-  <svg class="animate-spin h-4 w-4 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
-  </svg>
-  <span>Verificando credenciais... Por favor, aguarde.</span>
-</div>
+    <div id="loginLoading" class="flex flex-col items-center justify-center gap-2 text-blue-600 text-sm text-center hidden">
+      <div class="flex items-center gap-2">
+        <svg class="animate-spin h-4 w-4 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+        </svg>
+        <span>Verificando credenciais... Por favor, aguarde.</span>
+      </div>
+      <div id="tempoDecorrido" class="font-bold">Tempo: 00:00:00</div>
+    </div>
+
     <p id="loginError" class="text-red-600 text-sm text-center hidden">Usuário ou senha incorretos.</p>
   </div>
 
   <script>
     const USERS_API = "https://opensheet.vercel.app/1CqBE9J8S1muMBKT4v7x3jmZ4m4aecUaXOah_tWPaN1s/usuarios";
     let users = [];
+    let timerInterval;
+    let segundos = 0;
 
     async function fetchUsers() {
       const res = await fetch(USERS_API);
@@ -44,6 +50,22 @@
     function togglePassword() {
       const pw = document.getElementById("password");
       pw.type = pw.type === "password" ? "text" : "password";
+    }
+
+    function iniciarContador() {
+      segundos = 0;
+      document.getElementById('tempoDecorrido').textContent = 'Tempo: 00:00:00';
+      timerInterval = setInterval(() => {
+        segundos++;
+        const h = String(Math.floor(segundos / 3600)).padStart(2, '0');
+        const m = String(Math.floor((segundos % 3600) / 60)).padStart(2, '0');
+        const s = String(segundos % 60).padStart(2, '0');
+        document.getElementById('tempoDecorrido').textContent = `Tempo: ${h}:${m}:${s}`;
+      }, 1000);
+    }
+
+    function pararContador() {
+      clearInterval(timerInterval);
     }
 
     async function login() {
@@ -58,6 +80,8 @@
       loginBtn.disabled = true;
       loginBtn.classList.add("opacity-50");
 
+      iniciarContador();
+
       try {
         if (users.length === 0) {
           await fetchUsers();
@@ -66,12 +90,15 @@
         const match = users.find(u => u.usuario === user && u.senha === pass);
 
         if (match) {
+          pararContador();
           localStorage.setItem("usuario_logado", user);
           window.location.href = "sistema.html";
         } else {
+          pararContador();
           errorEl.classList.remove("hidden");
         }
       } catch (e) {
+        pararContador();
         errorEl.textContent = "Erro ao verificar login. Tente novamente.";
         errorEl.classList.remove("hidden");
       } finally {
